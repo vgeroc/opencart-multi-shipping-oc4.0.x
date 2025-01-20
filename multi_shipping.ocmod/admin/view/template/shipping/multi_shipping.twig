@@ -1,0 +1,432 @@
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="float-end">
+        <button type="submit" form="form-shipping" data-bs-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary"><i class="fa-solid fa-save"></i></button>
+        <a href="{{ back }}" data-bs-toggle="tooltip" title="{{ button_back }}" class="btn btn-light"><i class="fa-solid fa-reply"></i></a></div>
+      <h1>{{ heading_title }}</h1>
+      <ol class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+          <li class="breadcrumb-item"><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+  <div class="container-fluid">
+    {% if error_warning %}
+    <div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+    {% endif %}
+    {% if success %}
+    <div class="alert alert-success"><i class="fa fa-check-circle"></i> {{ success }}
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+    {% endif %}
+    <div class="card">
+      <div class="card-header"><i class="fa-solid fa-pencil"></i> {{ text_edit }}</div>
+      <div class="card-body">
+	    <div class="row"><div class="col-sm-12">{{ text_paypal }}</div></div>
+        <form id="form-shipping" action="{{ save }}" method="post" data-oc-toggle="ajax">
+		  <div class="row mb-3">
+		    <label for="input-status" class="col-sm-2 col-form-label">{{ entry_status }}</label>
+            <div class="col-sm-10">
+              <div class="form-check form-switch form-switch-lg">
+                <input id="input-status" type="checkbox" name="shipping_multi_shipping_status" value="1" class="form-check-input"{% if shipping_multi_shipping_status %} checked{% endif %}>
+              </div>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <label for="input-sort-order" class="col-sm-2 col-form-label">{{ entry_sort_order }}</label>
+            <div class="col-sm-10">
+              <input type="text" name="shipping_weight_sort_order" value="{{ shipping_weight_sort_order }}" placeholder="{{ entry_sort_order }}" id="input-sort-order" class="form-control">
+            </div>
+          </div>
+          <table id="shipping_methods" class="table table-striped table-bordered table-hover">
+            <thead>
+              <tr>
+                <td width="40%">{{ column_name }}</td>
+                <td width="55%">{{ column_settings }}</td>
+                <td>&nbsp;</td>
+              </tr>
+            </thead>
+            <tbody>
+              {% set row = 0 %}
+                {% for method in shipping_multi_shipping_method %}
+                  <tr id="shipping-row{{ row }}">
+                    <td class="text-left" style="vertical-align:top; border-bottom: 2px solid black;">'
+                      <div class="row mb-3">
+					    <label class="form-label">{{ entry_method_name }}</label>
+						<div class="input-group">
+                          {% for language in languages %}
+						    <div class="input-group-prepend">
+							  <span class="input-group-text"><img src="language/{{ language.code }}/{{ language.code }}.png" title="{{ language.name }}" ></span>
+						    </div>
+						    <input type="text" name="shipping_multi_shipping_method[{{ row }}][name][{{ language.language_id }}]" value="{{ method.name[language.language_id] }}" placeholder="{{ entry_method_name }}" class="form-control">
+						    <div id="error-method-{{row}}-name-{{ language.language_id }}" class="invalid-feedback"></div>
+                          {% endfor %}
+                        </div>
+					  </div>
+					  
+                      <div class="row mb-3">
+						<label class="form-label">{{ entry_comment }}</label>
+						<div class="input-group">
+                          {% for language in languages %}
+							<div class="input-group-prepend">
+							  <span class="input-group-text"><img src="language/{{ language.code }}/{{ language.code }}.png" title="{{ language.name }}"></span>
+							</div>
+							<textarea name="shipping_multi_shipping_method[{{ row }}][comment][{{ language.language_id }}]" rows="3" placeholder="{{ entry_comment }}" class="form-control">{{ method.comment[language.language_id] }}</textarea>
+                          {% endfor %}
+						</div>
+					  </div>
+					  
+					  <div class="row mb-3">
+                        <label for="input-rate-type{{ row }}" class="form-label">{{ entry_rate_type }}</label>
+						<div class="imput-group">
+                          <select id="input-rate-type{{ row }}" name="shipping_multi_shipping_method[{{ row }}][rate_type]" data-row="{{ row }}" class="form-select ratetype">
+							<option value="flat" {% if method.rate_type == 'flat' %}selected{% endif %}>{{ entry_flat_rate }}</option>
+							<option value="price" {% if method.rate_type == 'price' %}selected{% endif %}>{{ entry_price_rate }}</option>
+							<option value="weight" {% if method.rate_type == 'weight' %}selected{% endif %}>{{ entry_weight_rate }}</option>
+						  </select>
+						</div>
+					  </div>
+					  
+					  <div class="row mb-3 pt-3 flatrate" {% if method.rate_type != 'flat' %} style="display:none;" {% endif %}>
+                        <label for="input-flat-rate{{row}}" class="form-label"><span>{{ text_flat_rate }}</span></label>
+						<div class="input-group">
+                          <input id="input-flat-rate{{row}}" type="number" inputmode="numeric" placeholder="0.00" min="0" step="0.01" name="shipping_multi_shipping_method[{{ row }}][flat_rate]" value="{{ method.flat_rate }}" class="form-control">
+						  <div id="error-method-{{row}}-flat-rate" class="invalid-feedback"></div>
+						</div>
+					  </div>
+					  
+					  <div class="row mb-3 pt-3 pricerate" {% if method.rate_type != 'price' %} style="display:none;" {% endif %}>
+                        <label for="input-price-rate{{row}}" class="form-label"><span data-toggle="tooltip" title="{{ help_price }}">{{ text_price_rate }}</span></label>
+						<div class="input-group">
+						  <input id="input-price-rate{{row}}" type="text" name="shipping_multi_shipping_method[{{ row }}][price_rate]" value="{{ method.price_rate }}" placeholder="{{ price_placeholder }}" class="form-control" >
+						  <div id="error-method-{{row}}-price-rate" class="invalid-feedback"></div>
+						</div>
+					  </div>
+					  
+					  <div class="row mb-3 weightrate" {% if method.rate_type != 'weight' %} style="display:none;" {% endif %}>
+                        <label for="input-weight{{row}}" class="form-label"><span data-toggle="tooltip" title="{{ help_cart_weight }}">{{ entry_weight }}</span></label>
+						<div class="input-group">
+                          <input id="input-weight{{row}}" type="text" name="shipping_multi_shipping_method[{{ row }}][weight]" value="{{ method.weight }}" placeholder="{{ entry_weight }}" class="form-control" >
+						</div>
+					  </div>
+					  
+					  <div class="row mb-3 weightrate" {% if method.rate_type != 'weight' %} style="display:none;" {% endif %}>
+                        <label for="input-weight-rate{{row}}" class="form-label"><span data-toggle="tooltip" title="{{ help_weight }}">{{ text_weight_rate }}</span></label>
+						<div class="input-group">
+						  <input id="input-weight-rate{{row}}" type="text" name="shipping_multi_shipping_method[{{ row }}][weight_rate]" value="{{ method.weight_rate }}" placeholder="{{ weight_placeholder }}" class="form-control" >
+						  <div id="error-method-{{row}}-weight-rate" class="invalid-feedback"></div>
+						</div>
+					  </div>
+                    </td>
+
+                    <td class="text-left" style="vertical-align:top; border-bottom: 2px solid black;">'
+					  <div class="row mb-3">
+						<label for="input-method-status{{ row }}" class="form-label">{{ entry_status }}</label>
+						<div class="input-group">
+						  <div class="form-check form-switch form-switch-lg">
+						  <input type="hidden" name="shipping_multi_shipping_method[{{ row }}][status]" value="0"/>
+							<input type="checkbox" name="shipping_multi_shipping_method[{{ row }}][status]" value="1" id="input-method-status{{ row }}" class="form-check-input" {% if method.status %} checked{% endif %}>
+						  </div>
+						</div>  
+                      </div>
+					  
+					  <div class="row mb-3">
+						<label for="input-cart-total{{ row }}" class="form-label"><span data-toggle="tooltip" title="{{ help_cart_total }}">{{ entry_total }}</span></label>
+						<div class="input-group">
+                          <input id="input-cart-total{{ row }}" type="number" inputmode="numeric" placeholder="0.00" min="0" step="0.01" name="shipping_multi_shipping_method[{{ row }}][total]" value="{{ method.total }}" class="form-control" >
+						</div>
+					  </div>
+					  
+					  <div class="row mb-3">
+						<label for="input-geo-zone{{ row }}" class="form-label">{{ entry_geo_zone }}</label>
+                        <div class="input-group">
+						  <select name="shipping_multi_shipping_method[{{ row }}][geo_zone_id]" id="input-geo-zone{{ row }}" class="form-select">
+							{% for geo_zone in geo_zones %}
+							  <option value="{{ geo_zone.geo_zone_id }}" {% if geo_zone.geo_zone_id == method.geo_zone_id %} selected{% endif %}>{{ geo_zone.name }}</option>
+							{% endfor %}
+						  </select>
+						</div>
+					  </div>
+					  
+					  <div class="row mb-3">
+						<label for="input-tax-class{{ row }}" class="form-label">{{ entry_tax_class }}</label>
+						<div class="input-group">
+						  <select name="shipping_multi_shipping_method[{{ row }}][tax_class_id]" id="input-tax-class{{ row }}" class="form-select">
+							<option value="0">{{ text_none }}</option>
+							{% for tax_class in tax_classes %}
+							  <option value="{{ tax_class.tax_class_id }}"{% if tax_class.tax_class_id == method.tax_class_id %} selected{% endif %}>{{ tax_class.title }}</option>
+							{% endfor %}
+						  </select>
+						</div>
+					  </div>
+					  
+					  <div class="row mb-3 pt-3">  
+						<label class="form-label">{{ entry_store }}</label>  
+						<div class="input-group">
+						  <div class="form-control" style="height: 150px; overflow: auto;">
+							{% for store in stores %}
+							  <div class="form-check">
+								<input type="checkbox" name="shipping_multi_shipping_method[{{ row }}][store_id][]" value="{{ store.store_id }}" id="input-store-{{ store.store_id }}{{ row }}" class="form-check-input"{% if store.store_id in method.store_id %} checked{% endif %}>
+								<label for="input-store-{{ store.store_id }}{{ row }}" class="form-check-label">{{ store.name }}</label>
+							  </div>
+							{% endfor %}
+						  </div>
+						<div id="error-method-{{row}}-store" class="invalid-feedback"></div>
+						</div>
+					  </div> 
+					  
+<!-- User Groups start -->
+                      <div class="form-group required">
+						<label class="form-label">{{ entry_cgroup }}</label>  
+						<div class="input-group">
+						  <div class="form-control" style="height: 150px; overflow: auto;">
+							{% for group in customer_groups %}
+							  <div class="form-check">
+								<input type="checkbox" name="shipping_multi_shipping_method[{{ row }}][customer_group_id][]" value="{{ group.customer_group_id }}" id="input-group-{{ group.customer_group_id }}{{ row }}" class="form-check-input"{% if group.customer_group_id in method.customer_group_id %} checked{% endif %}>
+								<label for="input-group-{{ group.customer_group_id }}{{ row }}" class="form-check-label">{{ group.name }}</label>
+							  </div>
+							{% endfor %}
+                          </div>
+						</div>
+						<div id="error-method-{{row}}-group" class="invalid-feedback"></div>
+                      </div>
+<!-- User Groups End -->
+
+                    </td>
+                    <td class="text-left" style="border-bottom: 2px solid black;">					  
+					  <button type="button" onclick="$('#shipping-row{{ row }}').remove();" data-toggle="tooltip" title="{{ button_remove }}" class="btn btn-danger"><i class="fa fa-minus-circle"></i></button>
+					</td>
+                  </tr>
+
+                {% set row = row + 1 %}
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr>
+				<td colspan="2"></td>
+                <td class="text-left"><button type="button" onclick="addRow();" data-toggle="tooltip" title="{{ button_add }}" class="btn btn-primary"><i class="fa fa-plus-circle"></i></button></td>
+              </tr>
+            </tfoot>
+          </table>
+        </form>
+      </div>
+	</div>
+  </div>
+</div>
+<script>
+  var row = {{ row }};
+  
+  function addRow() {
+  	html =	'<tr id="shipping-row'+row+'">'
+		+	  '<td class="text-left" style="vertical-align:top; border-bottom: 2px solid black;">'
+		+       '<div class="row mb-3">'
+		+		  '<label class="form-label">{{ entry_method_name }}</label>'
+		+		  '<div class="input-group">';
+  				    {% for language in languages %}
+				  
+	html +=			  '<div class="input-group-prepend">'
+		+			    '<span class="input-group-text"><img src="language/{{ language.code }}/{{ language.code }}.png" title="{{ language.name }}" ></span>'
+		+			  '</div>'
+		+			  '<input type="text" name="shipping_multi_shipping_method[' + row + '][name][{{ language.language_id }}]" value="" placeholder="{{ entry_method_name }}" class="form-control" >'
+		+		      '<div id="error-method-{{row}}-name-{{ language.language_id }}" class="invalid-feedback"></div>';
+					{% endfor %}
+					
+	html +=		  '</div>'
+		+		'</div>'
+		+       '<div class="row mb-3">'
+		+		  '<label class="form-label">{{ entry_comment }}</label>'
+	html +=		  '<div class="input-group">';
+				  {% for language in languages %}
+				  
+	html +=			'<div class="input-group-prepend">'
+		+			  '<span class="input-group-text"><img src="language/{{ language.code }}/{{ language.code }}.png" title="{{ language.name }}" ></span>'
+		+			'</div>'
+		+			'<textarea name="shipping_multi_shipping_method[' + row + '][comment][{{ language.language_id }}]" rows="3" placeholder="{{ entry_comment }}" class="form-control"></textarea>';
+  				  {% endfor %}
+				  
+	html +=		  '</div>'
+		+		'</div>'
+		
+		+       '<div class="row mb-3">'
+		+		  '<label for="input-rate-type' + row + '" class="form-label">{{ entry_rate_type }}</label>'
+		+		  '<div class="input-group">'
+		+			'<select id="input-rate-type' + row + '" name="shipping_multi_shipping_method[' + row + '][rate_type]" data-row="' + row + '"class="form-select ratetype">'
+		+			  '<option value="flat" selected="selected">{{ entry_flat_rate }}</option>'
+		+			  '<option value="price">{{ entry_price_rate }}</option>'
+		+			  '<option value="weight">{{ entry_weight_rate }}</option>'
+		+			'</select>'
+		+		  '</div>'
+		+		'</div>'
+		+		'<div class="row mb-3 flatrate">'
+		+		  '<label for="input-flat-rate' + row + '" class="form-label">'
+		+			'<span data-toggle="tooltip" title="{{ help_flat_rate }}">{{ entry_flat_rate }}</span>'
+		+		  '</label>'
+		+		  '<div class="input-group">'
+		+		  	'<input id="input-flat-rate' + row + '"  type="number" inputmode="numeric" placeholder="0.00" min="0" step="0.01" name="shipping_multi_shipping_method[' + row + '][flat_rate]" value="" class="form-control" >'
+		+		 '</div>'
+		+		'</div>'
+		+		'<div class="row mb-3 pricerate" style="display: none;">'
+		+		  '<label for="input-price-rate' + row + '" class="form-label">'
+		+			'<span data-toggle="tooltip" title="{{ help_price }}">{{ entry_price_rate }}</span>'
+		+		  '</label>'
+		+		  '<div class="input-group">'
+		+		  	'<input id="input-price-rate' + row + '" type="text" name="shipping_multi_shipping_method[' + row + '][price_rate]" value="" placeholder="{{ price_placeholder }}" class="form-control" >'
+		+		  '</div>'
+		+		'</div>'
+		+		'<div class="row mb-3 weightrate" style="display: none;">'
+		+		  '<label for="input-weight' + row + '" class="form-label">'
+		+			'<span data-toggle="tooltip" title="{{ help_cart_weight }}">{{ entry_weight }}</span>'
+		+		  '</label>'
+		+		  '<div class="input-group">'
+		+			'<input id="input-weight' + row + '" type="text" name="shipping_multi_shipping_method[' + row + '][weight]" value="" placeholder="{{ entry_weight }}" class="form-control" >'
+		+		  '</div>'
+		+		'</div>'
+		+		'<div class="row mb-3 weightrate" style="display: none;">'
+		+		  '<label for="input-weightrate-rate' + row + '" class="form-label">'
+		+			'<span data-toggle="tooltip" title="{{ help_weight }}">{{ entry_weight_rate }}</span>'
+		+		  '</label>'
+		+		  '<div class="input-group">'
+		+			'<input id="input-weightrate-rate' + row + '" type="text" name="shipping_multi_shipping_method[' + row + '][weight_rate]" value="" placeholder="{{ weight_placeholder }}" class="form-control" >'
+		+		  '</div>'
+		+		'</div>'			
+		+	  '</td>'
+		+	  '<td class="text-left" style="vertical-align:top; border-bottom: 2px solid black;">'
+		+       '<div class="row mb-3">'
+		+		  '<label for="input-method-status' + row + '" class="form-label">{{ entry_status }}</label>'
+		+		  '<div class="input-group">'
+		+		  	'<div class="form-check form-switch form-switch-lg">'
+		+			  '<input type="hidden" name="shipping_multi_shipping_method[' + row + '][status]" value="0">'
+		+			  '<input type="checkbox" name="shipping_multi_shipping_method[{{ row }}][status]" value="1" id="input-method-status' + row + '" class="form-check-input">'
+		+		  	'</div>'
+		+		  '</div>'
+		+		'</div>'
+		+       '<div class="row mb-3">'
+		+		  '<label for="input-cart-total' + row + '" class="form-label"><span data-toggle="tooltip" title="{{ help_cart_total }}">{{ entry_total }}</span></label>'
+		+		  '<div class="input-group">'
+		+		  	'<input id="input-cart-total' + row + '" type="number" inputmode="numeric" placeholder="0.00" min="0" step="0.01" name="shipping_multi_shipping_method[{{ row }}][total]" value="{{ method.total }}" class="form-control">'
+		+		  '</div>'
+		+		'</div>'
+		+       '<div class="row mb-3">'
+		+		  '<label for="input-geo-zone' + row + '" class="form-label">{{ entry_geo_zone }}</label>'
+		+		  '<div class="input-group">'
+		+		  	'<select id="input-geo-zone' + row + '" name="shipping_multi_shipping_method[' + row + '][geo_zone_id]" class="form-select">';
+					  {% for geo_zone in geo_zones %}
+				  
+	html +=			   '<option value="{{ geo_zone.geo_zone_id }}">{{ geo_zone.name }}</option>';
+					  {% endfor %}
+					  
+	html +=	  	'</select>'
+		+		  '</div>'
+		+		'</div>'
+		+       '<div class="row mb-3">'
+		+		  '<label for="input-tax-class' + row + '" class="form-label">{{ entry_tax_class }}</label>'
+		+		  '<div class="input-group">'
+		+		  	'<select id="input-tax-class' + row + '" name="shipping_multi_shipping_method[' + row + '][tax_class_id]" class="form-control">'
+		+			  '<option value="0">{{ text_none }}</option>';
+					  {% for tax_class in tax_classes %}
+					  
+	html +=			  	'<option value="{{ tax_class.tax_class_id }}">{{ tax_class.title }}</option>';
+					  {% endfor %}
+					  
+	html +=			'</select>'
+		+		  '</div>'
+		+		'</div>'
+		+		'<div class="row mb-3">'  
+		+		  '<label class="form-label">{{ entry_store }}</label>' 
+		+		  '<div class="input-group">'
+		+			'<div class="form-control" style="height: 150px; overflow: auto;">';
+					  {% for store in stores %}
+						
+	html +=				'<div class="form-check">'
+		+				  '<input type="checkbox" name="shipping_multi_shipping_method[' + row + '][store_id][]" value="{{ store.store_id }}" id="input-store-{{ store.store_id }}' + row + '" class="form-check-input">'
+		+				  '<label for="input-store-{{ store.store_id }}' + row + '" class="form-check-label">{{ store.name }}</label>'
+		+				'</div>';
+					  {% endfor %}
+						
+	html +=			'</div>'
+		+		  	'<div id="error-method-' + row + '-store" class="invalid-feedback"></div>'
+		+		  '</div>'
+		+	  	'</div>'
+		+		'<div class="row mb-3">'  
+		+		  '<label class="form-label">{{ entry_cgroup }}</label>' 
+		+		  '<div class="input-group">'
+		+			'<div class="form-control" style="height: 150px; overflow: auto;">';
+					  {% for group in customer_groups %}
+						
+	html +=				'<div class="form-check">'
+		+				  '<input type="checkbox" name="shipping_multi_shipping_method[' + row + '][customer_group_id][]" value="{{ group.customer_group_id }}" id="input-group-{{ group.customer_group_id }}' + row + '" class="form-check-input">'
+		+				  '<label for="input-group-{{ group.customer_group_id }}' + row + '" class="form-check-label">{{ group.name }}</label>'
+		+				'</div>';
+					  {% endfor %}
+						
+	html +=			'</div>'
+		+		  	'<div id="error-method-' + row + '-group" class="invalid-feedback"></div>'
+		+		  '</div>'
+		+	  	'</div>'
+	
+		
+		
+		+	  '</td>'
+		+	  '<td class="text-left" style="vertical-align:top; border-bottom: 2px solid black;">'
+		+		'<button type="button" onclick="$(\'#shipping-row'+row+'\').remove();" data-toggle="tooltip" title="{{ button_remove }}" class="btn btn-danger"><i class="fa fa-minus-circle"></i></button>'
+		+	  '</td>'
+		+	'</tr>';
+  
+  		$('#shipping_methods tbody').append(html);
+  		row++;
+  }  
+
+$(document).on('change', 'select.ratetype', function() {
+  const $row = $(this).parents('tr');
+
+  // Hide all input boxes
+  $('.flatrate', $row).hide();
+  $('.pricerate', $row).hide();
+  $('.weightrate', $row).hide();
+
+  const rowIndex = $(this).data("row");
+  const priceRateId = `shipping_multi_shipping_method[${rowIndex}][price_rate]`;
+  const weightId = `shipping_multi_shipping_method[${rowIndex}][weight]`;
+  const weightRateId = `shipping_multi_shipping_method[${rowIndex}][weight_rate]`;
+  const flatRateId = `shipping_multi_shipping_method[${rowIndex}][flat_rate]`;
+
+  // Retrieve the original values from the input elements
+  let priceRate = $(`input[name="${priceRateId}"]`).data('original-value') || $(`input[name="${priceRateId}"]`).val();
+  let weight = $(`input[name="${weightId}"]`).data('original-value') || $(`input[name="${weightId}"]`).val();
+  let weightRate = $(`input[name="${weightRateId}"]`).data('original-value') || $(`input[name="${weightRateId}"]`).val();
+  let flatRate = $(`input[name="${flatRateId}"]`).data('original-value') || $(`input[name="${flatRateId}"]`).val();
+
+  // Remove values from hidden inputs and show the selected rates
+  if ($(this).val() === 'price') {
+    $(`input[name="${weightId}"]`).val('');
+    $(`input[name="${weightRateId}"]`).val('');
+    $(`input[name="${flatRateId}"]`).val('');
+    $('.pricerate', $row).show();
+    $(`input[name="${priceRateId}"]`).val(priceRate);
+  } else if ($(this).val() === 'weight') {
+    $(`input[name="${priceRateId}"]`).val('');
+    $(`input[name="${flatRateId}"]`).val('');
+    $('.weightrate', $row).show();
+    $(`input[name="${weightId}"]`).val(weight);
+    $(`input[name="${weightRateId}"]`).val(weightRate);
+  } else {
+    $(`input[name="${weightId}"]`).val('');
+    $(`input[name="${weightRateId}"]`).val('');
+    $(`input[name="${priceRateId}"]`).val('');
+    $('.flatrate', $row).show();
+    $(`input[name="${flatRateId}"]`).val(flatRate);
+  }
+
+  // Store the original values in the input elements
+  $(`input[name="${priceRateId}"]`).attr("data-original-value", priceRate);
+  $(`input[name="${weightId}"]`).attr("data-original-value", weight);
+  $(`input[name="${weightRateId}"]`).attr("data-original-value", weightRate);
+  $(`input[name="${flatRateId}"]`).attr("data-original-value", flatRate);
+});
+</script>
+{{ footer }}
